@@ -9,14 +9,16 @@ contract AdvancedCollectible is ERC721, VRFConsumerBase {
     bytes32 internal keyHash;
     uint256 public fee;
     uint256 public tokenCounter;
+    uint256 public basePrice;
 
-    enum Breed { PUG, SHIBA_INU, ST_BERNARD }
+    enum Breed{ PUG, SHIBA_INU, ST_BERNARD }
 
     mapping(bytes32 => address) public requestIdToSender;
     mapping(bytes32 => string) public requestIdToTokenURI;
     mapping(uint256 => Breed) public tokenIdToBreed;
     mapping(bytes32 => uint256) public requestIdToTokenId;
     event requestedCollectible(bytes32 indexed requestId);
+    event generateLog(string indexed message);
 
     constructor(address _VRFCoordinator, address _LinkToken, bytes32 _keyhash) public
     VRFConsumerBase(_VRFCoordinator, _LinkToken)
@@ -25,11 +27,12 @@ contract AdvancedCollectible is ERC721, VRFConsumerBase {
         keyHash = _keyhash;
         fee = 0.1 * 10 ** 18; // 0.1 LINK
         tokenCounter = 0;
+        basePrice = 1;
     }
 
-    function createCollectible(uint256 userProvideSeed, string memory tokenURI)
+    function createCollectible(string memory tokenURI)
     public returns(bytes32) {
-        bytes32 requestId = requestRandomness(keyHash, fee, userProvideSeed);
+        bytes32 requestId = requestRandomness(keyHash, fee, 0);
         requestIdToSender[requestId] = msg.sender;
         requestIdToTokenURI[requestId] = tokenURI;
         emit requestedCollectible(requestId);
@@ -45,6 +48,7 @@ contract AdvancedCollectible is ERC721, VRFConsumerBase {
         tokenIdToBreed[newItemId] = breed;
         requestIdToTokenId[requestId] = newItemId;
         tokenCounter++;
+        emit generateLog('Event test - FulfillRandomness completed.');
     }
 
     function setTokenURI(uint256 tokenId, string memory _tokenURI) public {
